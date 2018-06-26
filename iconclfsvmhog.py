@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 # =============================================================================
-# import matplotlib.pyplot as plt
 # from skimage.feature import hog
 # from skimage import exposure
 # =============================================================================
@@ -85,12 +85,9 @@ if __name__ is '__main__':
     # Load data.
     icons_train = load_dataset(100, 'trainset')
     icons_test = load_dataset(20, 'testset')
-# =============================================================================
-#     labels = np.array([1] * 9 + [2] * 9 + [3] * 8 + [4] * 12 + [5] * 7 + [6] * 5 + [0] * 50)
-#     labels_test = np.array([1] * 2 + [2] * 1 + [3] * 6 + [4] * 1 + [5] * 1 + [6] * 2 + [0] * 7)
-# =============================================================================
-    labels = np.array([1] * 18 + [2] * 18 + [3] * 16 + [4] * 24 + [5] * 14 + [6] * 10 + [0] * 100)
-    labels_test = np.array([1] * 2 + [2] * 1 + [3] * 6 + [4] * 1 + [5] * 1 + [6] * 2 + [0] * 7)
+   
+    labels = np.array([1] * 30 + [2] * 24 + [3] * 14 + [4] * 32 + [0] * 100)
+    labels_test = np.array([1] * 3 + [2] * 4 + [3] * 2 + [4] * 4 + [0] * 7)
     
     print('Defining HoG parameters ...')
     # HoG feature descriptor
@@ -118,5 +115,9 @@ if __name__ is '__main__':
     print('Evaluating model ... ')
     vis = evaluate_model(model, icons_test, hog_descriptors_test, labels_test)
     cv2.imwrite("digits-classification.jpg",vis)
+# =============================================================================
+#     plt.imshow(vis, cmap='gray')
+#     plt.show()
+# =============================================================================
     cv2.imshow("Vis", vis)
     cv2.waitKey(0)
