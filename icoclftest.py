@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
+import itertools as it
 from sklearn.externals import joblib
-
-from common import mosaic
 
 def load_dataset(n, fn):
     dataset = []
@@ -15,6 +14,25 @@ def load_dataset(n, fn):
         dataset.append(img)
     dataset = np.array(dataset).reshape(-1,100,100)
     return dataset
+
+def grouper(n, iterable, fillvalue=None):
+    '''grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx'''
+    args = [iter(iterable)] * n
+    output = it.zip_longest(fillvalue=fillvalue, *args)
+    return output
+
+def mosaic(w, imgs):
+    '''Make a grid from images.
+
+    w    -- number of grid columns
+    imgs -- images (must have same size and format)
+    '''
+    imgs = iter(imgs)
+    img0 = next(imgs)
+    pad = np.zeros_like(img0)
+    imgs = it.chain([img0], imgs)
+    rows = grouper(w, imgs, pad)
+    return np.vstack(map(np.hstack, rows))
 
 def evaluate_model(model, icons, samples, labels):
     resp = model.predict(samples)
@@ -31,16 +49,16 @@ def evaluate_model(model, icons, samples, labels):
     for img, flag in zip(icons, resp == labels):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         if not flag:
-            img[...,:2] = 0
+            img[:,:2] = 0
         
         vis.append(img)
     return mosaic(5, vis)
 
 def get_hog() : 
-    winSize = (20,20)
-    blockSize = (10,10)
-    blockStride = (5,5)
-    cellSize = (10,10)
+    winSize = (32,32)
+    blockSize = (16,16)
+    blockStride = (8,8)
+    cellSize = (8,8)
     nbins = 9
     derivAperture = 1
     winSigma = -1.
@@ -56,25 +74,26 @@ def get_hog() :
 
 if __name__ is '__main__':
 
-    print('Loading dataset ... ')
+    print('loading dataset... ')
     # Load data.
     icons_test = load_dataset(20, 'testset')
     labels_test = np.array([1] * 3 + [2] * 4 + [3] * 2 + [4] * 4 + [0] * 7)
     
-    print('Defining HoG parameters ...')
+    print('defining HoG parameters...')
     # HoG feature descriptor
     hog = get_hog();
     
-    print('Calculating HoG descriptor for every icon ... ')
+    print('calculating HoG descriptor for every icon... ')
     hog_descriptors_test = []
     
     for ico in icons_test:
         hog_descriptors_test.append(hog.compute(ico))
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
     
-    model = joblib.load('icoclf_svm.sav')
+    print('loading model...')
+    model = joblib.load('icoclf.pkl')
     
-    print('Evaluating model ... ')
+    print('evaluating model...')
     vis = evaluate_model(model, icons_test, hog_descriptors_test, labels_test)
     cv2.imwrite("icoclfevaluate.png",vis)
     cv2.imshow("Vis", vis)
